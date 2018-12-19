@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+<meta name="robots" content="noindex">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - plumed test coverage - gridtools/HistogramOnGrid.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">gridtools</a> - HistogramOnGrid.cpp<span style="font-size: 80%;"> (source / <a href="HistogramOnGrid.cpp.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">plumed test coverage</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">74</td>
+            <td class="headerCovTableEntry">76</td>
+            <td class="headerCovTableEntryHi">97.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2018-12-19 07:49:13</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</a>
+<span class="lineNum">       2 </span>            :    Copyright (c) 2015-2018 The plumed team
+<span class="lineNum">       3 </span>            :    (see the PEOPLE file at the root of the distribution for a list of names)
+<span class="lineNum">       4 </span>            : 
+<span class="lineNum">       5 </span>            :    See http://www.plumed.org for more information.
+<span class="lineNum">       6 </span>            : 
+<span class="lineNum">       7 </span>            :    This file is part of plumed, version 2.
+<span class="lineNum">       8 </span>            : 
+<span class="lineNum">       9 </span>            :    plumed is free software: you can redistribute it and/or modify
+<span class="lineNum">      10 </span>            :    it under the terms of the GNU Lesser General Public License as published by
+<span class="lineNum">      11 </span>            :    the Free Software Foundation, either version 3 of the License, or
+<span class="lineNum">      12 </span>            :    (at your option) any later version.
+<span class="lineNum">      13 </span>            : 
+<span class="lineNum">      14 </span>            :    plumed is distributed in the hope that it will be useful,
+<span class="lineNum">      15 </span>            :    but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      16 </span>            :    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      17 </span>            :    GNU Lesser General Public License for more details.
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            :    You should have received a copy of the GNU Lesser General Public License
+<span class="lineNum">      20 </span>            :    along with plumed.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+<span class="lineNum">      21 </span>            : +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+<span class="lineNum">      22 </span>            : #include &quot;HistogramOnGrid.h&quot;
+<span class="lineNum">      23 </span>            : #include &quot;tools/KernelFunctions.h&quot;
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span>            : namespace PLMD {
+<a name="26"><span class="lineNum">      26 </span>            : namespace gridtools {</a>
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span><span class="lineCov">         36 : void HistogramOnGrid::registerKeywords( Keywords&amp; keys ) {</span>
+<span class="lineNum">      29 </span><span class="lineCov">         36 :   GridVessel::registerKeywords( keys );</span>
+<span class="lineNum">      30 </span><span class="lineCov">         36 :   keys.add(&quot;compulsory&quot;,&quot;KERNEL&quot;,&quot;the type of kernel to use&quot;);</span>
+<span class="lineNum">      31 </span><span class="lineCov">         36 :   keys.add(&quot;compulsory&quot;,&quot;BANDWIDTH&quot;,&quot;the bandwidths&quot;);</span>
+<a name="32"><span class="lineNum">      32 </span><span class="lineCov">         36 : }</span></a>
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span><span class="lineCov">         28 : HistogramOnGrid::HistogramOnGrid( const vesselbase::VesselOptions&amp; da ):</span>
+<span class="lineNum">      35 </span>            :   GridVessel(da),
+<span class="lineNum">      36 </span>            :   neigh_tot(0),
+<span class="lineNum">      37 </span>            :   addOneKernelAtATime(false),
+<span class="lineNum">      38 </span>            :   bandwidths(dimension),
+<span class="lineNum">      39 </span><span class="lineCov">         28 :   discrete(false)</span>
+<span class="lineNum">      40 </span>            : {
+<span class="lineNum">      41 </span><span class="lineCov">         28 :   parse(&quot;KERNEL&quot;,kerneltype);</span>
+<span class="lineNum">      42 </span><span class="lineCov">         28 :   if( kerneltype==&quot;discrete&quot; || kerneltype==&quot;DISCRETE&quot; ) {</span>
+<span class="lineNum">      43 </span><span class="lineCov">          4 :     discrete=true; setNoDerivatives();</span>
+<span class="lineNum">      44 </span>            :   } else {
+<span class="lineNum">      45 </span><span class="lineCov">         24 :     parseVector(&quot;BANDWIDTH&quot;,bandwidths);</span>
+<span class="lineNum">      46 </span>            :   }
+<a name="47"><span class="lineNum">      47 </span><span class="lineCov">         28 : }</span></a>
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span><span class="lineCov">         16 : bool HistogramOnGrid::noDiscreteKernels() const {</span>
+<span class="lineNum">      50 </span><span class="lineCov">         16 :   return !discrete;</span>
+<a name="51"><span class="lineNum">      51 </span>            : }</a>
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span><span class="lineCov">         32 : void HistogramOnGrid::setBounds( const std::vector&lt;std::string&gt;&amp; smin, const std::vector&lt;std::string&gt;&amp; smax,</span>
+<span class="lineNum">      54 </span>            :                                  const std::vector&lt;unsigned&gt;&amp; nbins, const std::vector&lt;double&gt;&amp; spacing ) {
+<span class="lineNum">      55 </span><span class="lineCov">         32 :   GridVessel::setBounds( smin, smax, nbins, spacing );</span>
+<span class="lineNum">      56 </span><span class="lineCov">         32 :   if( !discrete ) {</span>
+<span class="lineNum">      57 </span><span class="lineCov">         28 :     std::vector&lt;double&gt; point(dimension,0);</span>
+<span class="lineNum">      58 </span><span class="lineCov">         56 :     KernelFunctions kernel( point, bandwidths, kerneltype, false, 1.0, true ); neigh_tot=1;</span>
+<span class="lineNum">      59 </span><span class="lineCov">         56 :     nneigh=kernel.getSupport( dx ); std::vector&lt;double&gt; support( kernel.getContinuousSupport() );</span>
+<span class="lineNum">      60 </span><span class="lineCov">         72 :     for(unsigned i=0; i&lt;dimension; ++i) {</span>
+<span class="lineNum">      61 </span><span class="lineCov">         44 :       if( pbc[i] &amp;&amp; 2*support[i]&gt;getGridExtent(i) ) error(&quot;bandwidth is too large for periodic grid&quot;);</span>
+<span class="lineNum">      62 </span><span class="lineCov">         44 :       neigh_tot *= (2*nneigh[i]+1);</span>
+<span class="lineNum">      63 </span><span class="lineCov">         28 :     }</span>
+<span class="lineNum">      64 </span>            :   }
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">         32 : }</span></a>
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span><span class="lineCov">      16002 : KernelFunctions* HistogramOnGrid::getKernelAndNeighbors( std::vector&lt;double&gt;&amp; point, unsigned&amp; num_neigh, std::vector&lt;unsigned&gt;&amp; neighbors ) const {</span>
+<span class="lineNum">      68 </span><span class="lineCov">      16002 :   if( discrete ) {</span>
+<span class="lineNum">      69 </span><span class="lineCov">          5 :     num_neigh=1; for(unsigned i=0; i&lt;dimension; ++i) point[i] += 0.5*dx[i];</span>
+<span class="lineNum">      70 </span><span class="lineCov">          5 :     neighbors[0] = getIndex( point ); return NULL;</span>
+<span class="lineNum">      71 </span>            :   } else {
+<span class="lineNum">      72 </span><span class="lineCov">      15997 :     KernelFunctions* kernel = new KernelFunctions( point, bandwidths, kerneltype, false, 1.0, true );</span>
+<span class="lineNum">      73 </span><span class="lineCov">      15993 :     getNeighbors( kernel-&gt;getCenter(), nneigh, num_neigh, neighbors );</span>
+<span class="lineNum">      74 </span><span class="lineCov">      15998 :     return kernel;</span>
+<span class="lineNum">      75 </span>            :   }
+<a name="76"><span class="lineNum">      76 </span>            : }</a>
+<span class="lineNum">      77 </span>            : 
+<span class="lineNum">      78 </span><span class="lineCov">      27019 : std::vector&lt;Value*&gt; HistogramOnGrid::getVectorOfValues() const {</span>
+<span class="lineNum">      79 </span><span class="lineCov">      27019 :   std::vector&lt;Value*&gt; vv;</span>
+<span class="lineNum">      80 </span><span class="lineCov">     107201 :   for(unsigned i=0; i&lt;dimension; ++i) {</span>
+<span class="lineNum">      81 </span><span class="lineCov">      80188 :     vv.push_back(new Value());</span>
+<span class="lineNum">      82 </span><span class="lineCov">      80190 :     if( pbc[i] ) vv[i]-&gt;setDomain( str_min[i], str_max[i] );</span>
+<span class="lineNum">      83 </span><span class="lineCov">      42713 :     else vv[i]-&gt;setNotPeriodic();</span>
+<span class="lineNum">      84 </span>            :   }
+<span class="lineNum">      85 </span><span class="lineCov">      27013 :   return vv;</span>
+<a name="86"><span class="lineNum">      86 </span>            : }</a>
+<span class="lineNum">      87 </span>            : 
+<span class="lineNum">      88 </span><span class="lineCov">      27018 : void HistogramOnGrid::calculate( const unsigned&amp; current, MultiValue&amp; myvals, std::vector&lt;double&gt;&amp; buffer, std::vector&lt;unsigned&gt;&amp; der_list ) const {</span>
+<span class="lineNum">      89 </span><span class="lineCov">      27018 :   if( addOneKernelAtATime ) {</span>
+<span class="lineNum">      90 </span>            :     plumed_dbg_assert( myvals.getNumberOfValues()==2 );
+<span class="lineNum">      91 </span><span class="lineCov">      11046 :     std::vector&lt;double&gt; der( dimension );</span>
+<span class="lineNum">      92 </span><span class="lineCov">      11061 :     for(unsigned i=0; i&lt;dimension; ++i) der[i]=myvals.getDerivative( 1, i );</span>
+<span class="lineNum">      93 </span><span class="lineCov">      11044 :     accumulate( getAction()-&gt;getPositionInCurrentTaskList(current), myvals.get(0), myvals.get(1), der, buffer );</span>
+<span class="lineNum">      94 </span>            :   } else {
+<span class="lineNum">      95 </span>            :     plumed_dbg_assert( myvals.getNumberOfValues()==dimension+2 );
+<span class="lineNum">      96 </span><span class="lineCov">      15972 :     std::vector&lt;double&gt; point( dimension ); double weight=myvals.get(0)*myvals.get( 1+dimension );</span>
+<span class="lineNum">      97 </span><span class="lineCov">      15971 :     for(unsigned i=0; i&lt;dimension; ++i) point[i]=myvals.get( 1+i );</span>
+<span class="lineNum">      98 </span>            : 
+<span class="lineNum">      99 </span>            :     // Get the kernel
+<span class="lineNum">     100 </span><span class="lineCov">      31947 :     unsigned num_neigh; std::vector&lt;unsigned&gt; neighbors;</span>
+<span class="lineNum">     101 </span><span class="lineCov">      31947 :     std::vector&lt;double&gt; der( dimension );</span>
+<span class="lineNum">     102 </span><span class="lineCov">      15974 :     KernelFunctions* kernel=getKernelAndNeighbors( point, num_neigh, neighbors );</span>
+<span class="lineNum">     103 </span>            : 
+<span class="lineNum">     104 </span><span class="lineCov">      15974 :     if( !kernel ) {</span>
+<span class="lineNum">     105 </span><span class="lineNoCov">          0 :       plumed_dbg_assert( num_neigh==1 ); der.resize(0);</span>
+<span class="lineNum">     106 </span><span class="lineNoCov">          0 :       accumulate( neighbors[0], weight, 1.0, der, buffer );</span>
+<span class="lineNum">     107 </span>            :     } else {
+<span class="lineNum">     108 </span><span class="lineCov">      15974 :       std::vector&lt;Value*&gt; vv( getVectorOfValues() );</span>
+<span class="lineNum">     109 </span>            : 
+<span class="lineNum">     110 </span><span class="lineCov">      31947 :       double newval; std::vector&lt;double&gt; xx( dimension );</span>
+<span class="lineNum">     111 </span><span class="lineCov">   15011275 :       for(unsigned i=0; i&lt;num_neigh; ++i) {</span>
+<span class="lineNum">     112 </span><span class="lineCov">   14995302 :         unsigned ineigh=neighbors[i];</span>
+<span class="lineNum">     113 </span><span class="lineCov">   14995474 :         if( inactive( ineigh ) ) continue ;</span>
+<span class="lineNum">     114 </span><span class="lineCov">   10640267 :         getGridPointCoordinates( ineigh, xx );</span>
+<span class="lineNum">     115 </span><span class="lineCov">   10631690 :         for(unsigned j=0; j&lt;dimension; ++j) vv[j]-&gt;set(xx[j]);</span>
+<span class="lineNum">     116 </span><span class="lineCov">   10640227 :         newval = kernel-&gt;evaluate( vv, der, true );</span>
+<span class="lineNum">     117 </span><span class="lineCov">   10640490 :         accumulate( ineigh, weight, newval, der, buffer );</span>
+<span class="lineNum">     118 </span>            :       }
+<span class="lineNum">     119 </span><span class="lineCov">      15973 :       delete kernel;</span>
+<span class="lineNum">     120 </span><span class="lineCov">      31948 :       for(unsigned i=0; i&lt;dimension; ++i) delete vv[i];</span>
+<span class="lineNum">     121 </span><span class="lineCov">      15974 :     }</span>
+<span class="lineNum">     122 </span>            :   }
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">      27022 : }</span></a>
+<span class="lineNum">     124 </span>            : 
+<span class="lineNum">     125 </span><span class="lineCov">      11268 : void HistogramOnGrid::accumulate( const unsigned&amp; ipoint, const double&amp; weight, const double&amp; dens, const std::vector&lt;double&gt;&amp; der, std::vector&lt;double&gt;&amp; buffer ) const {</span>
+<span class="lineNum">     126 </span><span class="lineCov">      11268 :   buffer[bufstart+nper*ipoint] += weight*dens;</span>
+<span class="lineNum">     127 </span><span class="lineCov">      11272 :   if( der.size()&gt;0 ) for(unsigned j=0; j&lt;dimension; ++j) buffer[bufstart+nper*ipoint + 1 + j] += weight*der[j];</span>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">      11261 : }</span></a>
+<span class="lineNum">     129 </span>            : 
+<span class="lineNum">     130 </span><span class="lineCov">         51 : void HistogramOnGrid::finish( const std::vector&lt;double&gt;&amp; buffer ) {</span>
+<span class="lineNum">     131 </span><span class="lineCov">         51 :   if( addOneKernelAtATime ) {</span>
+<span class="lineNum">     132 </span><span class="lineCov">      11072 :     for(unsigned i=0; i&lt;getAction()-&gt;getCurrentNumberOfActiveTasks(); ++i) {</span>
+<span class="lineNum">     133 </span><span class="lineCov">      11048 :       for(unsigned j=0; j&lt;nper; ++j) addDataElement( nper*getAction()-&gt;getActiveTask(i)+j, buffer[bufstart+i*nper+j] );</span>
+<span class="lineNum">     134 </span>            :     }
+<span class="lineNum">     135 </span>            :   } else {
+<span class="lineNum">     136 </span><span class="lineCov">         27 :     GridVessel::finish( buffer );</span>
+<span class="lineNum">     137 </span>            :   }
+<span class="lineNum">     138 </span><span class="lineCov">         51 : }</span>
+<a name="139"><span class="lineNum">     139 </span>            : </a>
+<span class="lineNum">     140 </span>            : }
+<span class="lineNum">     141 </span><span class="lineCov">       2523 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

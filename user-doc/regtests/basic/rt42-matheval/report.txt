@@ -1,0 +1,8 @@
+Wed Dec 19 07:39:07 UTC 2018
+Running regtest in /home/travis/build/plumed/plumed2/regtest/basic/rt42-matheval
+++ Test type: driver
+++ Arguments: --plumed plumed.dat --ixyz trajectory.xyz
+++ Processors: 0
+WARNING using plumed from /home/travis/opt/lib/plumed
+/home/travis/build/plumed/plumed2/regtest/basic/rt42-matheval/tmp
+Checking for matheval

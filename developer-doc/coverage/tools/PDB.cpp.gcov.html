@@ -1,0 +1,456 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+<meta name="robots" content="noindex">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - plumed test coverage - tools/PDB.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">tools</a> - PDB.cpp<span style="font-size: 80%;"> (source / <a href="PDB.cpp.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">plumed test coverage</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">157</td>
+            <td class="headerCovTableEntry">193</td>
+            <td class="headerCovTableEntryMed">81.3 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2018-12-19 07:49:13</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">27</td>
+            <td class="headerCovTableEntry">32</td>
+            <td class="headerCovTableEntryMed">84.4 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</a>
+<span class="lineNum">       2 </span>            :    Copyright (c) 2011-2018 The plumed team
+<span class="lineNum">       3 </span>            :    (see the PEOPLE file at the root of the distribution for a list of names)
+<span class="lineNum">       4 </span>            : 
+<span class="lineNum">       5 </span>            :    See http://www.plumed.org for more information.
+<span class="lineNum">       6 </span>            : 
+<span class="lineNum">       7 </span>            :    This file is part of plumed, version 2.
+<span class="lineNum">       8 </span>            : 
+<span class="lineNum">       9 </span>            :    plumed is free software: you can redistribute it and/or modify
+<span class="lineNum">      10 </span>            :    it under the terms of the GNU Lesser General Public License as published by
+<span class="lineNum">      11 </span>            :    the Free Software Foundation, either version 3 of the License, or
+<span class="lineNum">      12 </span>            :    (at your option) any later version.
+<span class="lineNum">      13 </span>            : 
+<span class="lineNum">      14 </span>            :    plumed is distributed in the hope that it will be useful,
+<span class="lineNum">      15 </span>            :    but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      16 </span>            :    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      17 </span>            :    GNU Lesser General Public License for more details.
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span>            :    You should have received a copy of the GNU Lesser General Public License
+<span class="lineNum">      20 </span>            :    along with plumed.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+<span class="lineNum">      21 </span>            : +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+<span class="lineNum">      22 </span>            : #include &quot;PDB.h&quot;
+<span class="lineNum">      23 </span>            : #include &quot;Tools.h&quot;
+<span class="lineNum">      24 </span>            : #include &lt;cstdio&gt;
+<span class="lineNum">      25 </span>            : #include &lt;iostream&gt;
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : using namespace std;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : //+PLUMEDOC INTERNAL pdbreader
+<span class="lineNum">      30 </span>            : /*
+<span class="lineNum">      31 </span>            : PLUMED can use the PDB format in several places
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : - To read molecular structure (\ref MOLINFO).
+<span class="lineNum">      34 </span>            : - To read reference conformations (\ref RMSD, but also many other methods in \ref dists, \ref FIT_TO_TEMPLATE, etc).
+<span class="lineNum">      35 </span>            : 
+<span class="lineNum">      36 </span>            : The implemented PDB reader expects a file formatted correctly according to the
+<span class="lineNum">      37 </span>            : [PDB standard](http://www.wwpdb.org/documentation/file-format-content/format33/v3.3.html).
+<span class="lineNum">      38 </span>            : In particular, the following columns are read from ATOM records
+<span class="lineNum">      39 </span>            : \verbatim
+<span class="lineNum">      40 </span>            : columns | content
+<span class="lineNum">      41 </span>            : 1-6     | record name (ATOM or HETATM)
+<span class="lineNum">      42 </span>            : 7-11    | serial number of the atom (starting from 1)
+<span class="lineNum">      43 </span>            : 13-16   | atom name
+<span class="lineNum">      44 </span>            : 18-20   | residue name
+<span class="lineNum">      45 </span>            : 22      | chain id
+<span class="lineNum">      46 </span>            : 23-26   | residue number
+<span class="lineNum">      47 </span>            : 31-38   | x coordinate
+<span class="lineNum">      48 </span>            : 39-46   | y coordinate
+<span class="lineNum">      49 </span>            : 47-54   | z coordinate
+<span class="lineNum">      50 </span>            : 55-60   | occupancy
+<span class="lineNum">      51 </span>            : 61-66   | beta factor
+<span class="lineNum">      52 </span>            : \endverbatim
+<span class="lineNum">      53 </span>            : PLUMED parser is slightly more permissive than the official PDB format
+<span class="lineNum">      54 </span>            : in the fact that the format of real numbers is not fixed. In other words,
+<span class="lineNum">      55 </span>            : any parsable real number is ok and the dot can be placed anywhere. However,
+<span class="lineNum">      56 </span>            : __columns are interpret strictly__. A sample PDB should look like the following
+<span class="lineNum">      57 </span>            : \verbatim
+<span class="lineNum">      58 </span>            : ATOM      2  CH3 ACE     1      12.932 -14.718  -6.016  1.00  1.00
+<span class="lineNum">      59 </span>            : ATOM      5  C   ACE     1      21.312  -9.928  -5.946  1.00  1.00
+<span class="lineNum">      60 </span>            : ATOM      9  CA  ALA     2      19.462 -11.088  -8.986  1.00  1.00
+<span class="lineNum">      61 </span>            : \endverbatim
+<span class="lineNum">      62 </span>            : 
+<span class="lineNum">      63 </span>            : Notice that serial numbers need not to be consecutive. In the three-line example above,
+<span class="lineNum">      64 </span>            : only the coordinates of three atoms are provided. This is perfectly legal and indicates PLUMED
+<span class="lineNum">      65 </span>            : that information about these atoms only is available. This could be both for structural
+<span class="lineNum">      66 </span>            : information in \ref MOLINFO, where the other atoms would have no name assigned, and for
+<span class="lineNum">      67 </span>            : reference structures used in \ref RMSD, where only the provided atoms would be used to compute RMSD.
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            : \par Occupancy and beta factors
+<span class="lineNum">      70 </span>            : 
+<span class="lineNum">      71 </span>            : PLUMED reads also occupancy and beta factors that however are given a very special meaning.
+<span class="lineNum">      72 </span>            : In cases where the PDB structure is used as a reference for an alignment (that's the case
+<span class="lineNum">      73 </span>            : for instance in \ref RMSD and in \ref FIT_TO_TEMPLATE), the occupancy column is used
+<span class="lineNum">      74 </span>            : to provide the weight of each atom in the alignment. In cases where, perhaps after alignment,
+<span class="lineNum">      75 </span>            : the displacement between running coordinates and the provided PDB is computed, the beta factors
+<span class="lineNum">      76 </span>            : are used as weight for the displacement.
+<span class="lineNum">      77 </span>            : Since setting the weights to zero is the same as __not__ including an atom in the alignement or
+<span class="lineNum">      78 </span>            : displacement calculation, the two following reference files would be equivalent when used in an \ref RMSD
+<span class="lineNum">      79 </span>            : calculation. First file:
+<span class="lineNum">      80 </span>            : \verbatim
+<span class="lineNum">      81 </span>            : ATOM      2  CH3 ACE     1      12.932 -14.718  -6.016  1.00  1.00
+<span class="lineNum">      82 </span>            : ATOM      5  C   ACE     1      21.312  -9.928  -5.946  1.00  1.00
+<span class="lineNum">      83 </span>            : ATOM      9  CA  ALA     2      19.462 -11.088  -8.986  0.00  0.00
+<span class="lineNum">      84 </span>            : \endverbatim
+<span class="lineNum">      85 </span>            : Second file:
+<span class="lineNum">      86 </span>            : \verbatim
+<span class="lineNum">      87 </span>            : ATOM      2  CH3 ACE     1      12.932 -14.718  -6.016  1.00  1.00
+<span class="lineNum">      88 </span>            : ATOM      5  C   ACE     1      21.312  -9.928  -5.946  1.00  1.00
+<span class="lineNum">      89 </span>            : \endverbatim
+<span class="lineNum">      90 </span>            : However notice that many extra atoms with zero weight might slow down the calculation, so
+<span class="lineNum">      91 </span>            : removing lines is better than setting their weights to zero.
+<span class="lineNum">      92 </span>            : In addition, weights for alignment need not to be equivalent to weights for displacement.
+<span class="lineNum">      93 </span>            : 
+<span class="lineNum">      94 </span>            : 
+<span class="lineNum">      95 </span>            : */
+<span class="lineNum">      96 </span>            : //+ENDPLUMEDOC
+<span class="lineNum">      97 </span>            : 
+<span class="lineNum">      98 </span>            : 
+<a name="99"><span class="lineNum">      99 </span>            : namespace PLMD {</a>
+<span class="lineNum">     100 </span>            : 
+<span class="lineNum">     101 </span><span class="lineCov">        393 : unsigned PDB::getNumberOfAtomBlocks()const {</span>
+<span class="lineNum">     102 </span><span class="lineCov">        393 :   return block_ends.size();</span>
+<a name="103"><span class="lineNum">     103 </span>            : }</a>
+<span class="lineNum">     104 </span>            : 
+<span class="lineNum">     105 </span><span class="lineCov">         18 : const std::vector&lt;unsigned&gt; &amp; PDB::getAtomBlockEnds()const {</span>
+<span class="lineNum">     106 </span><span class="lineCov">         18 :   return block_ends;</span>
+<a name="107"><span class="lineNum">     107 </span>            : }</a>
+<span class="lineNum">     108 </span>            : 
+<span class="lineNum">     109 </span><span class="lineCov">       8108 : const std::vector&lt;Vector&gt; &amp; PDB::getPositions()const {</span>
+<span class="lineNum">     110 </span><span class="lineCov">       8108 :   return positions;</span>
+<a name="111"><span class="lineNum">     111 </span>            : }</a>
+<span class="lineNum">     112 </span>            : 
+<span class="lineNum">     113 </span><span class="lineNoCov">          0 : void PDB::setPositions(const std::vector&lt;Vector&gt; &amp;v ) {</span>
+<span class="lineNum">     114 </span><span class="lineNoCov">          0 :   plumed_assert( v.size()==positions.size() );</span>
+<span class="lineNum">     115 </span><span class="lineNoCov">          0 :   positions=v;</span>
+<a name="116"><span class="lineNum">     116 </span><span class="lineNoCov">          0 : }</span></a>
+<span class="lineNum">     117 </span>            : 
+<span class="lineNum">     118 </span><span class="lineCov">      11306 : const std::vector&lt;double&gt; &amp; PDB::getOccupancy()const {</span>
+<span class="lineNum">     119 </span><span class="lineCov">      11306 :   return occupancy;</span>
+<a name="120"><span class="lineNum">     120 </span>            : }</a>
+<span class="lineNum">     121 </span>            : 
+<span class="lineNum">     122 </span><span class="lineCov">      11306 : const std::vector&lt;double&gt; &amp; PDB::getBeta()const {</span>
+<span class="lineNum">     123 </span><span class="lineCov">      11306 :   return beta;</span>
+<a name="124"><span class="lineNum">     124 </span>            : }</a>
+<span class="lineNum">     125 </span>            : 
+<span class="lineNum">     126 </span><span class="lineCov">       1104 : const std::vector&lt;std::string&gt; &amp; PDB::getRemark()const {</span>
+<span class="lineNum">     127 </span><span class="lineCov">       1104 :   return remark;</span>
+<a name="128"><span class="lineNum">     128 </span>            : }</a>
+<span class="lineNum">     129 </span>            : 
+<span class="lineNum">     130 </span><span class="lineCov">        686 : void PDB::addRemark( const std::vector&lt;std::string&gt;&amp; v1 ) {</span>
+<span class="lineNum">     131 </span><span class="lineCov">        686 :   remark.insert(remark.begin(),v1.begin(),v1.end());</span>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">        686 : }</span></a>
+<span class="lineNum">     133 </span>            : 
+<span class="lineNum">     134 </span><span class="lineCov">      17166 : const std::vector&lt;AtomNumber&gt; &amp; PDB::getAtomNumbers()const {</span>
+<span class="lineNum">     135 </span><span class="lineCov">      17166 :   return numbers;</span>
+<a name="136"><span class="lineNum">     136 </span>            : }</a>
+<span class="lineNum">     137 </span>            : 
+<span class="lineNum">     138 </span><span class="lineCov">     616520 : std::string PDB::getAtomName(AtomNumber a)const {</span>
+<span class="lineNum">     139 </span><span class="lineCov">     616520 :   std::map&lt;AtomNumber,unsigned&gt;::const_iterator p;</span>
+<span class="lineNum">     140 </span><span class="lineCov">     616520 :   p=number2index.find(a);</span>
+<span class="lineNum">     141 </span><span class="lineCov">     616520 :   if(p==number2index.end()) return &quot;&quot;;</span>
+<span class="lineNum">     142 </span><span class="lineCov">     616518 :   else return atomsymb[p-&gt;second];</span>
+<a name="143"><span class="lineNum">     143 </span>            : }</a>
+<span class="lineNum">     144 </span>            : 
+<span class="lineNum">     145 </span><span class="lineCov">      34142 : unsigned PDB::getResidueNumber(AtomNumber a)const {</span>
+<span class="lineNum">     146 </span><span class="lineCov">      34142 :   std::map&lt;AtomNumber,unsigned&gt;::const_iterator p;</span>
+<span class="lineNum">     147 </span><span class="lineCov">      34142 :   p=number2index.find(a);</span>
+<span class="lineNum">     148 </span><span class="lineCov">      34142 :   if(p==number2index.end()) return 0;</span>
+<span class="lineNum">     149 </span><span class="lineCov">      34140 :   else return residue[p-&gt;second];</span>
+<a name="150"><span class="lineNum">     150 </span>            : }</a>
+<span class="lineNum">     151 </span>            : 
+<span class="lineNum">     152 </span><span class="lineCov">      34142 : std::string PDB::getResidueName(AtomNumber a) const {</span>
+<span class="lineNum">     153 </span><span class="lineCov">      34142 :   std::map&lt;AtomNumber,unsigned&gt;::const_iterator p;</span>
+<span class="lineNum">     154 </span><span class="lineCov">      34142 :   p=number2index.find(a);</span>
+<span class="lineNum">     155 </span><span class="lineCov">      34142 :   if(p==number2index.end()) return &quot;&quot;;</span>
+<span class="lineNum">     156 </span><span class="lineCov">      34140 :   else return residuenames[p-&gt;second];</span>
+<a name="157"><span class="lineNum">     157 </span>            : }</a>
+<span class="lineNum">     158 </span>            : 
+<span class="lineNum">     159 </span><span class="lineCov">   50442108 : unsigned PDB::size()const {</span>
+<span class="lineNum">     160 </span><span class="lineCov">   50442108 :   return positions.size();</span>
+<a name="161"><span class="lineNum">     161 </span>            : }</a>
+<span class="lineNum">     162 </span>            : 
+<span class="lineNum">     163 </span><span class="lineCov">       1485 : bool PDB::readFromFilepointer(FILE *fp,bool naturalUnits,double scale) {</span>
+<span class="lineNum">     164 </span>            :   //cerr&lt;&lt;file&lt;&lt;endl;
+<span class="lineNum">     165 </span><span class="lineCov">       1485 :   bool file_is_alive=false;</span>
+<span class="lineNum">     166 </span><span class="lineCov">       1485 :   if(naturalUnits) scale=1.0;</span>
+<span class="lineNum">     167 </span><span class="lineCov">       1485 :   string line;</span>
+<span class="lineNum">     168 </span><span class="lineCov">       1485 :   fpos_t pos; bool between_ters=true;</span>
+<span class="lineNum">     169 </span><span class="lineCov">      67713 :   while(Tools::getline(fp,line)) {</span>
+<span class="lineNum">     170 </span>            :     //cerr&lt;&lt;line&lt;&lt;&quot;\n&quot;;
+<span class="lineNum">     171 </span><span class="lineCov">      66091 :     fgetpos (fp,&amp;pos);</span>
+<span class="lineNum">     172 </span><span class="lineCov">      66091 :     while(line.length()&lt;80) line.push_back(' ');</span>
+<span class="lineNum">     173 </span><span class="lineCov">      66091 :     string record=line.substr(0,6);</span>
+<span class="lineNum">     174 </span><span class="lineCov">     130834 :     string serial=line.substr(6,5);</span>
+<span class="lineNum">     175 </span><span class="lineCov">     130834 :     string atomname=line.substr(12,4);</span>
+<span class="lineNum">     176 </span><span class="lineCov">     130834 :     string residuename=line.substr(17,3);</span>
+<span class="lineNum">     177 </span><span class="lineCov">     130834 :     string chainID=line.substr(21,1);</span>
+<span class="lineNum">     178 </span><span class="lineCov">     130834 :     string resnum=line.substr(22,4);</span>
+<span class="lineNum">     179 </span><span class="lineCov">     130834 :     string x=line.substr(30,8);</span>
+<span class="lineNum">     180 </span><span class="lineCov">     130834 :     string y=line.substr(38,8);</span>
+<span class="lineNum">     181 </span><span class="lineCov">     130834 :     string z=line.substr(46,8);</span>
+<span class="lineNum">     182 </span><span class="lineCov">     130834 :     string occ=line.substr(54,6);</span>
+<span class="lineNum">     183 </span><span class="lineCov">     130834 :     string bet=line.substr(60,6);</span>
+<span class="lineNum">     184 </span><span class="lineCov">      66091 :     Tools::trim(record);</span>
+<span class="lineNum">     185 </span><span class="lineCov">      66091 :     if(record==&quot;TER&quot;) { between_ters=false; block_ends.push_back( positions.size() ); }</span>
+<span class="lineNum">     186 </span><span class="lineCov">      66091 :     if(record==&quot;END&quot;) { file_is_alive=true;  break;}</span>
+<span class="lineNum">     187 </span><span class="lineCov">      64786 :     if(record==&quot;ENDMDL&quot;) { file_is_alive=true;  break;}</span>
+<span class="lineNum">     188 </span><span class="lineCov">      64743 :     if(record==&quot;REMARK&quot;) {</span>
+<span class="lineNum">     189 </span><span class="lineCov">        682 :       vector&lt;string&gt; v1;  v1=Tools::getWords(line.substr(6));</span>
+<span class="lineNum">     190 </span><span class="lineCov">        682 :       addRemark( v1 );</span>
+<span class="lineNum">     191 </span>            :     }
+<span class="lineNum">     192 </span><span class="lineCov">      64743 :     if(record==&quot;ATOM&quot; || record==&quot;HETATM&quot;) {</span>
+<span class="lineNum">     193 </span><span class="lineCov">      63842 :       between_ters=true;</span>
+<span class="lineNum">     194 </span><span class="lineCov">      63842 :       AtomNumber a; unsigned resno;</span>
+<span class="lineNum">     195 </span>            :       double o,b;
+<span class="lineNum">     196 </span><span class="lineCov">      63842 :       Vector p;</span>
+<span class="lineNum">     197 </span><span class="lineCov">      63842 :       Tools::convert(serial,a);</span>
+<span class="lineNum">     198 </span><span class="lineCov">      63842 :       Tools::convert(resnum,resno);</span>
+<span class="lineNum">     199 </span><span class="lineCov">      63842 :       Tools::convert(occ,o);</span>
+<span class="lineNum">     200 </span><span class="lineCov">      63842 :       Tools::convert(bet,b);</span>
+<span class="lineNum">     201 </span><span class="lineCov">      63842 :       Tools::convert(x,p[0]);</span>
+<span class="lineNum">     202 </span><span class="lineCov">      63842 :       Tools::convert(y,p[1]);</span>
+<span class="lineNum">     203 </span><span class="lineCov">      63842 :       Tools::convert(z,p[2]);</span>
+<span class="lineNum">     204 </span>            :       // scale into nm
+<span class="lineNum">     205 </span><span class="lineCov">      63842 :       p*=scale;</span>
+<span class="lineNum">     206 </span><span class="lineCov">      63842 :       numbers.push_back(a);</span>
+<span class="lineNum">     207 </span><span class="lineCov">      63842 :       number2index[a]=positions.size();</span>
+<span class="lineNum">     208 </span><span class="lineCov">      63842 :       std::size_t startpos=atomname.find_first_not_of(&quot; \t&quot;);</span>
+<span class="lineNum">     209 </span><span class="lineCov">      63842 :       std::size_t endpos=atomname.find_last_not_of(&quot; \t&quot;);</span>
+<span class="lineNum">     210 </span><span class="lineCov">      63842 :       atomsymb.push_back( atomname.substr(startpos, endpos-startpos+1) );</span>
+<span class="lineNum">     211 </span><span class="lineCov">      63842 :       residue.push_back(resno);</span>
+<span class="lineNum">     212 </span><span class="lineCov">      63842 :       chain.push_back(chainID);</span>
+<span class="lineNum">     213 </span><span class="lineCov">      63842 :       occupancy.push_back(o);</span>
+<span class="lineNum">     214 </span><span class="lineCov">      63842 :       beta.push_back(b);</span>
+<span class="lineNum">     215 </span><span class="lineCov">      63842 :       positions.push_back(p);</span>
+<span class="lineNum">     216 </span><span class="lineCov">      63842 :       residuenames.push_back(residuename);</span>
+<span class="lineNum">     217 </span>            :     }
+<span class="lineNum">     218 </span><span class="lineCov">      64743 :   }</span>
+<span class="lineNum">     219 </span><span class="lineCov">       1485 :   if( between_ters ) block_ends.push_back( positions.size() );</span>
+<span class="lineNum">     220 </span><span class="lineCov">       1485 :   return file_is_alive;</span>
+<a name="221"><span class="lineNum">     221 </span>            : }</a>
+<span class="lineNum">     222 </span>            : 
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 : void PDB::setArgKeyword( const std::string&amp; new_args ) {</span>
+<span class="lineNum">     224 </span><span class="lineNoCov">          0 :   bool replaced=false;</span>
+<span class="lineNum">     225 </span><span class="lineNoCov">          0 :   for(unsigned i=0; i&lt;remark.size(); ++i) {</span>
+<span class="lineNum">     226 </span><span class="lineNoCov">          0 :     if( remark[i].find(&quot;ARG=&quot;)!=std::string::npos) {</span>
+<span class="lineNum">     227 </span><span class="lineNoCov">          0 :       remark[i]=new_args; replaced=true;</span>
+<span class="lineNum">     228 </span>            :     }
+<span class="lineNum">     229 </span>            :   }
+<span class="lineNum">     230 </span><span class="lineNoCov">          0 :   plumed_assert( replaced );</span>
+<a name="231"><span class="lineNum">     231 </span><span class="lineNoCov">          0 : }</span></a>
+<span class="lineNum">     232 </span>            : 
+<span class="lineNum">     233 </span><span class="lineCov">        162 : bool PDB::read(const std::string&amp;file,bool naturalUnits,double scale) {</span>
+<span class="lineNum">     234 </span><span class="lineCov">        162 :   FILE* fp=fopen(file.c_str(),&quot;r&quot;);</span>
+<span class="lineNum">     235 </span><span class="lineCov">        162 :   if(!fp) return false;</span>
+<span class="lineNum">     236 </span><span class="lineCov">        162 :   readFromFilepointer(fp,naturalUnits,scale);</span>
+<span class="lineNum">     237 </span><span class="lineCov">        162 :   fclose(fp);</span>
+<span class="lineNum">     238 </span><span class="lineCov">        162 :   return true;</span>
+<a name="239"><span class="lineNum">     239 </span>            : }</a>
+<span class="lineNum">     240 </span>            : 
+<span class="lineNum">     241 </span><span class="lineCov">         66 : void PDB::getChainNames( std::vector&lt;std::string&gt;&amp; chains ) const {</span>
+<span class="lineNum">     242 </span><span class="lineCov">         66 :   chains.resize(0);</span>
+<span class="lineNum">     243 </span><span class="lineCov">         66 :   chains.push_back( chain[0] );</span>
+<span class="lineNum">     244 </span><span class="lineCov">     122959 :   for(unsigned i=1; i&lt;size(); ++i) {</span>
+<span class="lineNum">     245 </span><span class="lineCov">     122893 :     if( chains[chains.size()-1]!=chain[i] ) chains.push_back( chain[i] );</span>
+<span class="lineNum">     246 </span>            :   }
+<a name="247"><span class="lineNum">     247 </span><span class="lineCov">         66 : }</span></a>
+<span class="lineNum">     248 </span>            : 
+<span class="lineNum">     249 </span><span class="lineCov">        412 : void PDB::getResidueRange( const std::string&amp; chainname, unsigned&amp; res_start, unsigned&amp; res_end, std::string&amp; errmsg ) const {</span>
+<span class="lineNum">     250 </span><span class="lineCov">        412 :   bool inres=false, foundchain=false;</span>
+<span class="lineNum">     251 </span><span class="lineCov">     991897 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     252 </span><span class="lineCov">     991485 :     if( chain[i]==chainname ) {</span>
+<span class="lineNum">     253 </span><span class="lineCov">      75943 :       if(!inres) {</span>
+<span class="lineNum">     254 </span><span class="lineCov">        412 :         if(foundchain) errmsg=&quot;found second start of chain named &quot; + chainname;</span>
+<span class="lineNum">     255 </span><span class="lineCov">        412 :         res_start=residue[i];</span>
+<span class="lineNum">     256 </span>            :       }
+<span class="lineNum">     257 </span><span class="lineCov">      75943 :       inres=true; foundchain=true;</span>
+<span class="lineNum">     258 </span><span class="lineCov">     915542 :     } else if( inres &amp;&amp; chain[i]!=chainname ) {</span>
+<span class="lineNum">     259 </span><span class="lineCov">        364 :       inres=false;</span>
+<span class="lineNum">     260 </span><span class="lineCov">        364 :       res_end=residue[i-1];</span>
+<span class="lineNum">     261 </span>            :     }
+<span class="lineNum">     262 </span>            :   }
+<span class="lineNum">     263 </span><span class="lineCov">        412 :   if(inres) res_end=residue[size()-1];</span>
+<a name="264"><span class="lineNum">     264 </span><span class="lineCov">        412 : }</span></a>
+<span class="lineNum">     265 </span>            : 
+<span class="lineNum">     266 </span><span class="lineCov">        109 : void PDB::getAtomRange( const std::string&amp; chainname, AtomNumber&amp; a_start, AtomNumber&amp; a_end, std::string&amp; errmsg ) const {</span>
+<span class="lineNum">     267 </span><span class="lineCov">        109 :   bool inres=false, foundchain=false;</span>
+<span class="lineNum">     268 </span><span class="lineCov">     237406 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     269 </span><span class="lineCov">     237297 :     if( chain[i]==chainname ) {</span>
+<span class="lineNum">     270 </span><span class="lineCov">      61531 :       if(!inres) {</span>
+<span class="lineNum">     271 </span><span class="lineCov">        109 :         if(foundchain) errmsg=&quot;found second start of chain named &quot; + chainname;</span>
+<span class="lineNum">     272 </span><span class="lineCov">        109 :         a_start=numbers[i];</span>
+<span class="lineNum">     273 </span>            :       }
+<span class="lineNum">     274 </span><span class="lineCov">      61531 :       inres=true; foundchain=true;</span>
+<span class="lineNum">     275 </span><span class="lineCov">     175766 :     } else if( inres &amp;&amp; chain[i]!=chainname ) {</span>
+<span class="lineNum">     276 </span><span class="lineCov">         70 :       inres=false;</span>
+<span class="lineNum">     277 </span><span class="lineCov">         70 :       a_end=numbers[i-1];</span>
+<span class="lineNum">     278 </span>            :     }
+<span class="lineNum">     279 </span>            :   }
+<span class="lineNum">     280 </span><span class="lineCov">        109 :   if(inres) a_end=numbers[size()-1];</span>
+<a name="281"><span class="lineNum">     281 </span><span class="lineCov">        109 : }</span></a>
+<span class="lineNum">     282 </span>            : 
+<span class="lineNum">     283 </span><span class="lineCov">       7364 : std::string PDB::getResidueName( const unsigned&amp; resnum ) const {</span>
+<span class="lineNum">     284 </span><span class="lineCov">    9022831 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     285 </span><span class="lineCov">    9022831 :     if( residue[i]==resnum ) return residuenames[i];</span>
+<span class="lineNum">     286 </span>            :   }
+<span class="lineNum">     287 </span><span class="lineNoCov">          0 :   return &quot;&quot;;</span>
+<a name="288"><span class="lineNum">     288 </span>            : }</a>
+<span class="lineNum">     289 </span>            : 
+<span class="lineNum">     290 </span><span class="lineCov">       4564 : std::string PDB::getResidueName(const unsigned&amp; resnum,const std::string&amp; chainid ) const {</span>
+<span class="lineNum">     291 </span><span class="lineCov">    5806339 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     292 </span><span class="lineCov">    5806339 :     if( residue[i]==resnum &amp;&amp; ( chainid==&quot;*&quot; || chain[i]==chainid) ) return residuenames[i];</span>
+<span class="lineNum">     293 </span>            :   }
+<span class="lineNum">     294 </span><span class="lineNoCov">          0 :   return &quot;&quot;;</span>
+<span class="lineNum">     295 </span>            : }
+<a name="296"><span class="lineNum">     296 </span>            : </a>
+<span class="lineNum">     297 </span>            : 
+<span class="lineNum">     298 </span><span class="lineCov">      13260 : AtomNumber PDB::getNamedAtomFromResidue( const std::string&amp; aname, const unsigned&amp; resnum ) const {</span>
+<span class="lineNum">     299 </span><span class="lineCov">   16347180 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     300 </span><span class="lineCov">   16347180 :     if( residue[i]==resnum &amp;&amp; atomsymb[i]==aname ) return numbers[i];</span>
+<span class="lineNum">     301 </span>            :   }
+<span class="lineNum">     302 </span><span class="lineNoCov">          0 :   std::string num; Tools::convert( resnum, num );</span>
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 :   plumed_merror(&quot;residue &quot; + num + &quot; does not contain an atom named &quot; + aname );</span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :   return numbers[0]; // This is to stop compiler errors</span>
+<a name="305"><span class="lineNum">     305 </span>            : }</a>
+<span class="lineNum">     306 </span>            : 
+<span class="lineNum">     307 </span><span class="lineCov">       1195 : AtomNumber PDB::getNamedAtomFromResidueAndChain( const std::string&amp; aname, const unsigned&amp; resnum, const std::string&amp; chainid ) const {</span>
+<span class="lineNum">     308 </span><span class="lineCov">    1003391 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     309 </span><span class="lineCov">    1003391 :     if( residue[i]==resnum &amp;&amp; atomsymb[i]==aname &amp;&amp; ( chainid==&quot;*&quot; || chain[i]==chainid) ) return numbers[i];</span>
+<span class="lineNum">     310 </span>            :   }
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :   std::string num; Tools::convert( resnum, num );</span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :   plumed_merror(&quot;residue &quot; + num + &quot; from chain &quot; + chainid + &quot; does not contain an atom named &quot; + aname );</span>
+<span class="lineNum">     313 </span><span class="lineNoCov">          0 :   return numbers[0]; // This is to stop compiler errors</span>
+<a name="314"><span class="lineNum">     314 </span>            : }</a>
+<span class="lineNum">     315 </span>            : 
+<span class="lineNum">     316 </span><span class="lineCov">       4266 : std::vector&lt;AtomNumber&gt; PDB::getAtomsInResidue(const unsigned&amp; resnum,const std::string&amp; chainid)const {</span>
+<span class="lineNum">     317 </span><span class="lineCov">       4266 :   std::vector&lt;AtomNumber&gt; tmp;</span>
+<span class="lineNum">     318 </span><span class="lineCov">   11147058 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     319 </span><span class="lineCov">   11142792 :     if( residue[i]==resnum &amp;&amp; ( chainid==&quot;*&quot; || chain[i]==chainid) ) tmp.push_back(numbers[i]);</span>
+<span class="lineNum">     320 </span>            :   }
+<span class="lineNum">     321 </span><span class="lineCov">       4266 :   if(tmp.size()==0) {</span>
+<span class="lineNum">     322 </span><span class="lineNoCov">          0 :     std::string num; Tools::convert( resnum, num );</span>
+<span class="lineNum">     323 </span><span class="lineNoCov">          0 :     plumed_merror(&quot;Cannot find residue &quot; + num + &quot; from chain &quot; + chainid  );</span>
+<span class="lineNum">     324 </span>            :   }
+<span class="lineNum">     325 </span><span class="lineCov">       4266 :   return tmp;</span>
+<a name="326"><span class="lineNum">     326 </span>            : }</a>
+<span class="lineNum">     327 </span>            : 
+<span class="lineNum">     328 </span><span class="lineCov">         12 : std::vector&lt;AtomNumber&gt; PDB::getAtomsInChain(const std::string&amp; chainid)const {</span>
+<span class="lineNum">     329 </span><span class="lineCov">         12 :   std::vector&lt;AtomNumber&gt; tmp;</span>
+<span class="lineNum">     330 </span><span class="lineCov">      31356 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     331 </span><span class="lineCov">      31344 :     if( chainid==&quot;*&quot; || chain[i]==chainid ) tmp.push_back(numbers[i]);</span>
+<span class="lineNum">     332 </span>            :   }
+<span class="lineNum">     333 </span><span class="lineCov">         12 :   if(tmp.size()==0) {</span>
+<span class="lineNum">     334 </span><span class="lineNoCov">          0 :     plumed_merror(&quot;Cannot find atoms from chain &quot; + chainid  );</span>
+<span class="lineNum">     335 </span>            :   }
+<span class="lineNum">     336 </span><span class="lineCov">         12 :   return tmp;</span>
+<a name="337"><span class="lineNum">     337 </span>            : }</a>
+<span class="lineNum">     338 </span>            : 
+<span class="lineNum">     339 </span><span class="lineCov">       4638 : std::string PDB::getChainID(const unsigned&amp; resnumber) const {</span>
+<span class="lineNum">     340 </span><span class="lineCov">    5689172 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     341 </span><span class="lineCov">    5693810 :     if(resnumber==residue[i]) return chain[i];</span>
+<span class="lineNum">     342 </span>            :   }
+<span class="lineNum">     343 </span><span class="lineNoCov">          0 :   plumed_merror(&quot;Not enough residues in pdb input file&quot;);</span>
+<a name="344"><span class="lineNum">     344 </span>            : }</a>
+<span class="lineNum">     345 </span>            : 
+<span class="lineNum">     346 </span><span class="lineNoCov">          0 : bool PDB::checkForResidue( const std::string&amp; name ) const {</span>
+<span class="lineNum">     347 </span><span class="lineNoCov">          0 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     348 </span><span class="lineNoCov">          0 :     if( residuenames[i]==name ) return true;</span>
+<span class="lineNum">     349 </span>            :   }
+<span class="lineNum">     350 </span><span class="lineNoCov">          0 :   return false;</span>
+<a name="351"><span class="lineNum">     351 </span>            : }</a>
+<span class="lineNum">     352 </span>            : 
+<span class="lineNum">     353 </span><span class="lineNoCov">          0 : bool PDB::checkForAtom( const std::string&amp; name ) const {</span>
+<span class="lineNum">     354 </span><span class="lineNoCov">          0 :   for(unsigned i=0; i&lt;size(); ++i) {</span>
+<span class="lineNum">     355 </span><span class="lineNoCov">          0 :     if( atomsymb[i]==name ) return true;</span>
+<span class="lineNum">     356 </span>            :   }
+<span class="lineNum">     357 </span><span class="lineNoCov">          0 :   return false;</span>
+<a name="358"><span class="lineNum">     358 </span>            : }</a>
+<span class="lineNum">     359 </span>            : 
+<span class="lineNum">     360 </span><span class="lineNoCov">          0 : Log&amp; operator&lt;&lt;(Log&amp; ostr, const PDB&amp;  pdb) {</span>
+<span class="lineNum">     361 </span>            :   char buffer[1000];
+<span class="lineNum">     362 </span><span class="lineNoCov">          0 :   for(unsigned i=0; i&lt;pdb.positions.size(); i++) {</span>
+<span class="lineNum">     363 </span><span class="lineNoCov">          0 :     sprintf(buffer,&quot;ATOM %3d %8.3f %8.3f %8.3f\n&quot;,pdb.numbers[i].serial(),pdb.positions[i][0],pdb.positions[i][1],pdb.positions[i][2]);</span>
+<span class="lineNum">     364 </span><span class="lineNoCov">          0 :     ostr&lt;&lt;buffer;</span>
+<span class="lineNum">     365 </span>            :   }
+<span class="lineNum">     366 </span><span class="lineNoCov">          0 :   return ostr;</span>
+<a name="367"><span class="lineNum">     367 </span>            : }</a>
+<span class="lineNum">     368 </span>            : 
+<span class="lineNum">     369 </span><span class="lineCov">        852 : Vector PDB::getPosition(AtomNumber a)const {</span>
+<span class="lineNum">     370 </span><span class="lineCov">        852 :   std::map&lt;AtomNumber,unsigned&gt;::const_iterator p;</span>
+<span class="lineNum">     371 </span><span class="lineCov">        852 :   p=number2index.find(a);</span>
+<span class="lineNum">     372 </span><span class="lineCov">        852 :   if(p==number2index.end()) plumed_merror(&quot;atom not available&quot;);</span>
+<span class="lineNum">     373 </span><span class="lineCov">        852 :   else return positions[p-&gt;second];</span>
+<span class="lineNum">     374 </span>            : }
+<span class="lineNum">     375 </span>            : 
+<a name="376"><span class="lineNum">     376 </span>            : </a>
+<span class="lineNum">     377 </span>            : 
+<span class="lineNum">     378 </span><span class="lineCov">       2523 : }</span>
+<span class="lineNum">     379 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

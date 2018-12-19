@@ -1,0 +1,8 @@
+Wed Dec 19 07:39:33 UTC 2018
+Running regtest in /home/travis/build/plumed/plumed2/regtest/basic/rt45-mpi
+++ Test type: driver
+++ Arguments: --plumed plumed.dat --mf_pdb traj.pdb --multi 2 --dump-forces atom_forces
+++ Processors: 4
+WARNING using plumed from /home/travis/opt/lib/plumed
+/home/travis/build/plumed/plumed2/regtest/basic/rt45-mpi/tmp
+Checking for cregex
